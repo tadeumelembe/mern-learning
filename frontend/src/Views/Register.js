@@ -1,8 +1,9 @@
-import { useState, useReducer, useEffect } from 'react'
+import { useReducer, useEffect, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FaUser } from 'react-icons/fa'
 import { toast } from 'react-toastify'
 import axios from 'axios'
+import { UserContext } from '../Context/UserContext'
 
 const initialUserState = {
     name: '',
@@ -28,11 +29,22 @@ const registerReducer = (state, action) => {
 }
 
 function Register() {
-    
+    const { userContextState, userContextActions } = useContext(UserContext)
+
     const [formData, dispatch] = useReducer(registerReducer, initialUserState)
     const { name, surname, email, password, password2 } = formData
 
+    const [isLoading, setIsLoading] = useState(false)
+
     const navigate = useNavigate()
+
+    useEffect(() => {
+    
+        if (userContextState.token) {
+            navigate('/')
+        }
+    
+      }, [])
 
     const onChange = (e) => {
         dispatch({
@@ -45,7 +57,7 @@ function Register() {
     const onSubmit = (e) => {
         e.preventDefault()
 
-        if(!name || !surname || !password || !email){
+        if (!name || !surname || !password || !email) {
             toast.error('Fill all the fields');
             return
         }
@@ -53,12 +65,12 @@ function Register() {
         if (password !== password2) {
             toast.error('Passwords do not match!');
             return
-        }   
+        }
 
         fetchRegister()
     }
 
-    const fetchRegister=async ()=>{
+    const fetchRegister = async () => {
 
         const userData = {
             name: name,
@@ -67,8 +79,39 @@ function Register() {
             password: password
         }
 
-        const response = await axios.post('http://localhost:5000/api/users/register', userData)
-        console.log(response)
+        try {
+            setIsLoading(true)
+            const response = await axios.post('/api/users/register', userData)
+
+
+            if (response.data) {
+                console.log(response.data)
+
+                userContextActions({
+                    type: 'setUser',
+                    payload: {
+                        ...userContextState,
+                        name: response.data.name,
+                        surname: response.data.surname ? response.data.surname : null,
+                        email: response.data.email,
+                        id: response.data.id,
+                        token: response.data.token
+                    }
+                })
+
+            }
+            setIsLoading(false)
+
+            navigate('/')
+
+        } catch (err) {
+            if (err.response) {
+                toast.error(err.response.data.message);
+            }
+
+            setIsLoading(false)
+
+        }
 
     }
 
@@ -141,7 +184,7 @@ function Register() {
                     </div>
                     <div className='form-group'>
                         <button type='submit' className='btn btn-block'>
-                            Submit
+                            {isLoading ? 'Loading' : 'Submit'}
                         </button>
                     </div>
                 </form>

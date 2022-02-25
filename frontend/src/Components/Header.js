@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { FaSignInAlt, FaSignOutAlt, FaUser } from 'react-icons/fa'
 import {useNavigate, Link} from 'react-router-dom'
+import {UserContext} from '../Context/UserContext'
 
 function Header() {
     const navigate = useNavigate()
-    
-    const { user} = useState(false)
-  
+
+    const { userContextState, userContextActions } = useContext(UserContext)
   
     return (
       <header className='header'>
@@ -14,9 +14,9 @@ function Header() {
           <Link to='/'>GoalSetter</Link>
         </div>
         <ul>
-          {user ? (
+          {userContextState.token ? (
             <li>
-              <button className='btn'>
+              <button className='btn' onClick={()=> userContextActions({type:'logOut'})}>
                 <FaSignOutAlt /> Logout
               </button>
             </li>
